@@ -1,0 +1,103 @@
+use chrono::{Datelike, NaiveDate, Utc};
+use clap::{App, Arg};
+use ics::properties::{Categories, Description, DtEnd, DtStart, Summary, Transp, Trigger};
+use ics::{Alarm, Event, ICalendar};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+struct Birthday {
+    name: String,
+    date: NaiveDate,
+}
+
+impl<'a> Birthday {
+    fn into_event(self, year: i32, dtstamp: String) -> Event<'a> {
+        let mut event = Event::new(Uuid::new_v4().to_hyphenated().to_string(), dtstamp);
+        if self.date.year() == 0 {
+            event.push(Summary::new(self.name));
+        } else {
+            event.push(Summary::new(format!(
+                "{} ({})",
+                self.name,
+                year - self.date.year()
+            )));
+        }
+        event.push(DtStart::new(date_to_ical_string(
+            &self.date.with_year(year).unwrap(),
+        )));
+        event.push(DtEnd::new(date_to_ical_string(
+            &self.date.with_year(year).unwrap().succ(),
+        )));
+        event.push(Categories::new("Geburtstag"));
+        event.push(Transp::new("TRANSPARENT"));
+
+        let alarm = Alarm::display(Trigger::new("PT0H"), Description::new("Geburtstag"));
+        event.add_alarm(alarm);
+
+        event
+    }
+}
+
+fn date_to_ical_string(date: &NaiveDate) -> String {
+    date.format("%Y%m%d").to_string()
+}
+
+fn main() {
+    let matches = App::new("bd-ical-creator")
+        .version("0.1.0")
+        .author("<kontakt@der-fetzer.de>")
+        .arg(
+            Arg::with_name("INPUT")
+                .help("Sets the input file to use")
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("OUTPUT")
+                .help("Sets the output file to use")
+                .required(true),
+        )
+        .get_matches();
+
+    let input_file = File::open(matches.value_of("INPUT").unwrap()).unwrap();
+    let lines = BufReader::new(input_file).lines();
+
+    let birthdays: Vec<Birthday> = lines
+        .map(|line| {
+            let line = line.unwrap();
+            let split_line: Vec<&str> = line.split(',').collect();
+            if split_line.len() != 2 {
+                panic!("Could not parse line: {}", line);
+            }
+            let date = NaiveDate::parse_from_str(split_line[1], "%d.%m.%Y")
+                .or_else(|_| NaiveDate::parse_from_str(&format!("{}0", split_line[1]), "%d.%m.%Y"))
+                .unwrap_or_else(|_| panic!("Could not parse line: {}", line));
+            Birthday {
+                name: split_line[0].trim().to_string(),
+                date,
+            }
+        })
+        .collect();
+
+    let now = Utc::now();
+    let current_year = now.year();
+
+    let mut calendar = ICalendar::new("2.0", "ics-rs");
+
+    for birthday in birthdays.iter() {
+        for year in current_year..current_year + 5 {
+            let mut current_birthday = birthday.clone();
+            current_birthday.date = current_birthday.date.with_year(year).unwrap();
+            calendar.add_event(
+                birthday
+                    .clone()
+                    .into_event(year, now.format("%Y%m%dT%H%M%SZ").to_string()),
+            );
+        }
+    }
+
+    calendar
+        .save_file(matches.value_of("OUTPUT").unwrap())
+        .unwrap();
+}

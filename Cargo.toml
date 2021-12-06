@@ -1,0 +1,11 @@
+[package]
+name = "bd-ical-creator"
+authors = ["kontakt@der-fetzer.de"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ics = "0.5.7"
+clap = "2.34.0"
+chrono = "0.4.19"
+uuid = { version = "0.8.2", features = ["v4"] }
