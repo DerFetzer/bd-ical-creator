@@ -63,7 +63,12 @@ fn main() {
     let input_file = File::open(matches.value_of("INPUT").unwrap()).unwrap();
     let lines = BufReader::new(input_file).lines();
 
-    let birthdays: Vec<Birthday> = lines
+    let now = Utc::now();
+    let current_year = now.year();
+
+    let mut calendar = ICalendar::new("2.0", "ics-rs");
+
+    lines
         .map(|line| {
             let line = line.unwrap();
             let split_line: Vec<&str> = line.split(',').collect();
@@ -78,24 +83,17 @@ fn main() {
                 date,
             }
         })
-        .collect();
-
-    let now = Utc::now();
-    let current_year = now.year();
-
-    let mut calendar = ICalendar::new("2.0", "ics-rs");
-
-    for birthday in birthdays.iter() {
-        for year in current_year..current_year + 5 {
-            let mut current_birthday = birthday.clone();
-            current_birthday.date = current_birthday.date.with_year(year).unwrap();
-            calendar.add_event(
-                birthday
-                    .clone()
-                    .into_event(year, now.format("%Y%m%dT%H%M%SZ").to_string()),
-            );
-        }
-    }
+        .for_each(|birthday| {
+            for year in current_year..current_year + 5 {
+                let mut current_birthday = birthday.clone();
+                current_birthday.date = current_birthday.date.with_year(year).unwrap();
+                calendar.add_event(
+                    birthday
+                        .clone()
+                        .into_event(year, now.format("%Y%m%dT%H%M%SZ").to_string()),
+                );
+            }
+        });
 
     calendar
         .save_file(matches.value_of("OUTPUT").unwrap())
