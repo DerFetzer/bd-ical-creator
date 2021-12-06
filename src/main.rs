@@ -1,48 +1,12 @@
+mod birthday;
+
 use chrono::{Datelike, NaiveDate, Utc};
 use clap::{App, Arg};
-use ics::properties::{Categories, Description, DtEnd, DtStart, Summary, Transp, Trigger};
-use ics::{Alarm, Event, ICalendar};
+use ics::ICalendar;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use uuid::Uuid;
 
-#[derive(Debug, Clone)]
-struct Birthday {
-    name: String,
-    date: NaiveDate,
-}
-
-impl<'a> Birthday {
-    fn into_event(self, year: i32, dtstamp: String) -> Event<'a> {
-        let mut event = Event::new(Uuid::new_v4().to_hyphenated().to_string(), dtstamp);
-        if self.date.year() == 0 {
-            event.push(Summary::new(self.name));
-        } else {
-            event.push(Summary::new(format!(
-                "{} ({})",
-                self.name,
-                year - self.date.year()
-            )));
-        }
-        event.push(DtStart::new(date_to_ical_string(
-            &self.date.with_year(year).unwrap(),
-        )));
-        event.push(DtEnd::new(date_to_ical_string(
-            &self.date.with_year(year).unwrap().succ(),
-        )));
-        event.push(Categories::new("Geburtstag"));
-        event.push(Transp::new("TRANSPARENT"));
-
-        let alarm = Alarm::display(Trigger::new("PT0H"), Description::new("Geburtstag"));
-        event.add_alarm(alarm);
-
-        event
-    }
-}
-
-fn date_to_ical_string(date: &NaiveDate) -> String {
-    date.format("%Y%m%d").to_string()
-}
+use crate::birthday::Birthday;
 
 fn main() {
     let matches = App::new("bd-ical-creator")
