@@ -30,8 +30,8 @@ fn main() {
     let now = Utc::now();
     let current_year = now.year();
 
-    let start_year = current_year - 5;
-    let end_year = current_year + 10;
+    let start_year = current_year - 2;
+    let end_year = current_year + 5;
 
     let mut calendar = ICalendar::new("2.0", "ics-rs");
 
