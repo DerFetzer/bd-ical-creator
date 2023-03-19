@@ -11,7 +11,7 @@ pub struct Birthday {
 
 impl<'a> Birthday {
     pub fn into_event(self, year: i32, dtstamp: String) -> Event<'a> {
-        let mut event = Event::new(Uuid::new_v4().to_hyphenated().to_string(), dtstamp);
+        let mut event = Event::new(Uuid::new_v4().hyphenated().to_string(), dtstamp);
         if self.date.year() == 0 {
             event.push(Summary::new(self.name));
         } else {
@@ -25,7 +25,7 @@ impl<'a> Birthday {
             &self.date.with_year(year).unwrap(),
         )));
         event.push(DtEnd::new(date_to_ical_string(
-            &self.date.with_year(year).unwrap().succ(),
+            &self.date.with_year(year).unwrap().succ_opt().unwrap(),
         )));
         event.push(Categories::new("Geburtstag"));
         event.push(Transp::new("TRANSPARENT"));

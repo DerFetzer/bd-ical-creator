@@ -1,7 +1,7 @@
 mod birthday;
 
 use chrono::{Datelike, NaiveDate, Utc};
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use ics::ICalendar;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -9,22 +9,22 @@ use std::io::{BufRead, BufReader};
 use crate::birthday::Birthday;
 
 fn main() {
-    let matches = App::new("bd-ical-creator")
+    let matches = Command::new("bd-ical-creator")
         .version("0.1.0")
         .author("<kontakt@der-fetzer.de>")
         .arg(
-            Arg::with_name("INPUT")
+            Arg::new("INPUT")
                 .help("Sets the input file to use")
                 .required(true),
         )
         .arg(
-            Arg::with_name("OUTPUT")
+            Arg::new("OUTPUT")
                 .help("Sets the output file to use")
                 .required(true),
         )
         .get_matches();
 
-    let input_file = File::open(matches.value_of("INPUT").unwrap()).unwrap();
+    let input_file = File::open(matches.get_one::<String>("INPUT").unwrap()).unwrap();
     let lines = BufReader::new(input_file).lines();
 
     let now = Utc::now();
@@ -60,6 +60,6 @@ fn main() {
         });
 
     calendar
-        .save_file(matches.value_of("OUTPUT").unwrap())
+        .save_file(matches.get_one::<String>("OUTPUT").unwrap())
         .unwrap();
 }
