@@ -30,6 +30,9 @@ fn main() {
     let now = Utc::now();
     let current_year = now.year();
 
+    let start_year = current_year - 5;
+    let end_year = current_year + 10;
+
     let mut calendar = ICalendar::new("2.0", "ics-rs");
 
     lines
@@ -48,14 +51,15 @@ fn main() {
             }
         })
         .for_each(|birthday| {
-            for year in current_year..current_year + 5 {
+            for year in start_year..=end_year {
                 let mut current_birthday = birthday.clone();
                 current_birthday.date = current_birthday.date.with_year(year).unwrap();
-                calendar.add_event(
-                    birthday
-                        .clone()
-                        .into_event(year, now.format("%Y%m%dT%H%M%SZ").to_string()),
-                );
+                if let Some(event) = birthday
+                    .clone()
+                    .into_event(year, now.format("%Y%m%dT%H%M%SZ").to_string())
+                {
+                    calendar.add_event(event);
+                }
             }
         });
 

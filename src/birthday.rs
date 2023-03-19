@@ -10,7 +10,10 @@ pub struct Birthday {
 }
 
 impl<'a> Birthday {
-    pub fn into_event(self, year: i32, dtstamp: String) -> Event<'a> {
+    pub fn into_event(self, year: i32, dtstamp: String) -> Option<Event<'a>> {
+        if self.date.year() < year {
+            return None;
+        }
         let mut event = Event::new(Uuid::new_v4().hyphenated().to_string(), dtstamp);
         if self.date.year() == 0 {
             event.push(Summary::new(self.name));
@@ -33,7 +36,7 @@ impl<'a> Birthday {
         let alarm = Alarm::display(Trigger::new("PT0H"), Description::new("Geburtstag"));
         event.add_alarm(alarm);
 
-        event
+        Some(event)
     }
 }
 
