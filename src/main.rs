@@ -52,11 +52,8 @@ fn main() {
         })
         .for_each(|birthday| {
             for year in start_year..=end_year {
-                let mut current_birthday = birthday.clone();
-                current_birthday.date = current_birthday.date.with_year(year).unwrap();
-                if let Some(event) = birthday
-                    .clone()
-                    .into_event(year, now.format("%Y%m%dT%H%M%SZ").to_string())
+                if let Some(event) =
+                    birthday.as_event(year, now.format("%Y%m%dT%H%M%SZ").to_string())
                 {
                     calendar.add_event(event);
                 }

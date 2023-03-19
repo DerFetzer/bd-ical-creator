@@ -10,13 +10,13 @@ pub struct Birthday {
 }
 
 impl<'a> Birthday {
-    pub fn into_event(self, year: i32, dtstamp: String) -> Option<Event<'a>> {
-        if self.date.year() < year {
+    pub fn as_event(&self, year: i32, dtstamp: String) -> Option<Event<'a>> {
+        if self.date.year() > year {
             return None;
         }
         let mut event = Event::new(Uuid::new_v4().hyphenated().to_string(), dtstamp);
         if self.date.year() == 0 {
-            event.push(Summary::new(self.name));
+            event.push(Summary::new(self.name.clone()));
         } else {
             event.push(Summary::new(format!(
                 "{} ({})",
